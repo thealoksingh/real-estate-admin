@@ -13,8 +13,8 @@ const Navigation = () => {
 
   const navItems = [
     { path: '/dashboard/satyamDeveloper', icon: FileText, label: 'Satyam Developer' },
-    { path: '/dashboard/satyamDeveloper', icon: FileText, label: 'Lodha Developer' },
-    { path: '/dashboard/satyamDeveloper', icon: FileText, label: 'Other Developer' },
+    { path: '/dashboard/lodhaDevelopers', icon: FileText, label: 'Lodha Developer' },
+    { path: '/dashboard/thereachAddress', icon: FileText, label: 'Other Developer' },
   ];
 
   const toggleMobileMenu = () => {
