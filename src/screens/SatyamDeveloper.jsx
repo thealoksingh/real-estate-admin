@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Search,
   Eye,
@@ -10,60 +10,48 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import axios from "axios";
+
+console.log(import.meta.env);
+
+const baseurl = "http://localhost:6969/api";
 
 const SatyamDeveloper = () => {
   const [search, setSearch] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample data for processed real estate inquiries
-const [requests] = useState([
-  {
-    id: 1,
-    name: "Amit Sharma",
-    phone: "+91 98765 43210",
-    email: "amit.sharma@gmail.com",
-    message:
-      "Looking for a family home with a garden. Budget around ₹40,00,000. Contacted and scheduled viewing.",
-    date: "2024-01-10",
-    status: "contacted",
-    processedDate: "2024-01-11",
-  },
-  {
-    id: 2,
-    name: "Rahul Mehta",
-    phone: "+91 98234 56789",
-    email: "rahul.mehta@gmail.com",
-    message:
-      "Interested in luxury apartments in the city. Budget ₹80,00,000+. Deal completed successfully.",
-    date: "2024-01-08",
-    status: "completed",
-    processedDate: "2024-01-12",
-  },
-  {
-    id: 3,
-    name: "Priya Patel",
-    phone: "+91 97654 32109",
-    email: "priya.patel@gmail.com",
-    message:
-      "Need office space for a startup. Minimum 2000 sq ft. Budget constraints led to cancellation.",
-    date: "2024-01-05",
-    status: "cancelled",
-    processedDate: "2024-01-09",
-  },
-  {
-    id: 4,
-    name: "Suresh Iyer",
-    phone: "+91 99123 45678",
-    email: "suresh.iyer@gmail.com",
-    message:
-      "Looking for a retirement home near a lake. Single-story preferred. Currently in negotiation phase.",
-    date: "2024-01-03",
-    status: "in-progress",
-    processedDate: "2024-01-06",
-  },
-]);
+  const fetchforms = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${baseurl}/forms`);
 
+      const formattedData = response.data
+        .filter((item) => item.source === "satyammetroshowstoppers.in")
+        .map((item) => ({
+          id: item._id,
+          name: item.name,
+          phone: item.mobile || "N/A",
+          email: item.email || "N/A",
+          message: item.message || "No message provided.",
+          date: item.createdAt,
+          processedDate: item.updatedAt,
+          status: item.status || "in-progress",
+        }));
+
+      setRequests(formattedData);
+    } catch (error) {
+      console.error("Error fetching forms:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchforms();
+  }, []);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -95,7 +83,8 @@ const [requests] = useState([
     }
   };
 
-  const filteredRequests = requests.filter((request) => {
+  const filteredRequests = requests
+  .filter((request) => {
     const matchesSearch =
       request.name.toLowerCase().includes(search.toLowerCase()) ||
       request.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -103,7 +92,9 @@ const [requests] = useState([
     const matchesStatus =
       statusFilter === "all" || request.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  })
+  .sort((a, b) => new Date(b.date) - new Date(a.date)); // latest first
+
 
   const MessageModal = ({ request, onClose }) => {
     if (!request) return null;
@@ -130,19 +121,25 @@ const [requests] = useState([
                   <label className="block text-sm font-medium text-slate-300 mb-1">
                     Name
                   </label>
-                  <p className="text-white text-sm lg:text-base break-words">{request.name}</p>
+                  <p className="text-white text-sm lg:text-base break-words">
+                    {request.name}
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">
                     Phone
                   </label>
-                  <p className="text-white text-sm lg:text-base break-all">{request.phone}</p>
+                  <p className="text-white text-sm lg:text-base break-all">
+                    {request.phone}
+                  </p>
                 </div>
                 <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-slate-300 mb-1">
                     Email
                   </label>
-                  <p className="text-white text-sm lg:text-base break-all">{request.email}</p>
+                  <p className="text-white text-sm lg:text-base break-all">
+                    {request.email}
+                  </p>
                 </div>
               </div>
 
@@ -166,7 +163,7 @@ const [requests] = useState([
                     {getStatusIcon(request.status)}
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        request.status
+                        request.status,
                       )}`}
                     >
                       {request.status.replace("-", " ").toUpperCase()}
@@ -229,74 +226,80 @@ const [requests] = useState([
 
       {/* Requests Grid */}
       <div className="grid gap-4">
-        {filteredRequests.map((request) => (
-          <div
-            key={request.id}
-            className="bg-slate-800/50 backdrop-blur border border-slate-700/50 hover:border-blue-500/50 rounded-lg p-4 lg:p-6 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-200"
-          >
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
-              <div className="flex-1">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 lg:w-5 lg:h-5 text-slate-400" />
-                    <h3 className="text-base lg:text-lg font-semibold text-white">
-                      {request.name}
-                    </h3>
+        {loading ? (
+          <div className="text-center py-12 text-slate-400">
+            Loading requests...
+          </div>
+        ) : (
+          filteredRequests.map((request) => (
+            <div
+              key={request.id}
+              className="bg-slate-800/50 backdrop-blur border border-slate-700/50 hover:border-blue-500/50 rounded-lg p-4 lg:p-6 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-200"
+            >
+              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 lg:w-5 lg:h-5 text-slate-400" />
+                      <h3 className="text-base lg:text-lg font-semibold text-white">
+                        {request.name}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {getStatusIcon(request.status)}
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          request.status,
+                        )}`}
+                      >
+                        {request.status.replace("-", " ").toUpperCase()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {getStatusIcon(request.status)}
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        request.status
-                      )}`}
-                    >
-                      {request.status.replace("-", " ").toUpperCase()}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 mb-4">
+                    <div className="flex items-center gap-2 text-slate-400 text-sm lg:text-base">
+                      <Phone className="w-3 h-3 lg:w-4 lg:h-4" />
+                      <span className="break-all">{request.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-400 text-sm lg:text-base">
+                      <Mail className="w-3 h-3 lg:w-4 lg:h-4" />
+                      <span className="break-all">{request.email}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 mb-4">
+                    <MessageSquare className="w-3 h-3 lg:w-4 lg:h-4 text-slate-400 mt-1 flex-shrink-0" />
+                    <p className="text-slate-300 line-clamp-2 text-sm lg:text-base">
+                      {request.message}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-xs lg:text-sm text-slate-400">
+                    <span>
+                      Received: {new Date(request.date).toLocaleDateString()}
+                    </span>
+                    <span>
+                      Processed:{" "}
+                      {new Date(request.processedDate).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 mb-4">
-                  <div className="flex items-center gap-2 text-slate-400 text-sm lg:text-base">
-                    <Phone className="w-3 h-3 lg:w-4 lg:h-4" />
-                    <span className="break-all">{request.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-400 text-sm lg:text-base">
-                    <Mail className="w-3 h-3 lg:w-4 lg:h-4" />
-                    <span className="break-all">{request.email}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 mb-4">
-                  <MessageSquare className="w-3 h-3 lg:w-4 lg:h-4 text-slate-400 mt-1 flex-shrink-0" />
-                  <p className="text-slate-300 line-clamp-2 text-sm lg:text-base">
-                    {request.message}
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-xs lg:text-sm text-slate-400">
-                  <span>
-                    Received: {new Date(request.date).toLocaleDateString()}
-                  </span>
-                  <span>
-                    Processed:{" "}
-                    {new Date(request.processedDate).toLocaleDateString()}
-                  </span>
-                </div>
+                <button
+                  onClick={() => setSelectedRequest(request)}
+                  className="flex items-center justify-center gap-2 px-3 lg:px-4 py-2 lg:py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg shadow-blue-500/50 text-sm lg:text-base w-full lg:w-auto lg:ml-4"
+                >
+                  <Eye className="w-3 h-3 lg:w-4 lg:h-4" />
+                  <span className="lg:inline">View Details</span>
+                </button>
               </div>
-
-              <button
-                onClick={() => setSelectedRequest(request)}
-                className="flex items-center justify-center gap-2 px-3 lg:px-4 py-2 lg:py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg shadow-blue-500/50 text-sm lg:text-base w-full lg:w-auto lg:ml-4"
-              >
-                <Eye className="w-3 h-3 lg:w-4 lg:h-4" />
-                <span className="lg:inline">View Details</span>
-              </button>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {filteredRequests.length === 0 && (
+      {!loading && filteredRequests.length === 0 && (
         <div className="text-center py-12">
           <div className="text-slate-400 mb-2">
             <MessageSquare className="w-12 h-12 mx-auto" />
@@ -305,7 +308,6 @@ const [requests] = useState([
         </div>
       )}
 
-      {/* Message Modal */}
       <MessageModal
         request={selectedRequest}
         onClose={() => setSelectedRequest(null)}
