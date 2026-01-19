@@ -12,8 +12,6 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
-console.log(import.meta.env);
-
 const baseurl = "http://localhost:6969/api";
 
 const SatyamDeveloper = () => {
